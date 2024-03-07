@@ -3,6 +3,7 @@ package com.github.novicezk.midjourney.service;
 
 import com.github.novicezk.midjourney.enums.BlendDimensions;
 import com.github.novicezk.midjourney.result.Message;
+import com.github.novicezk.midjourney.result.MessagesResultVO;
 import eu.maxschuster.dataurl.DataUrl;
 
 import java.util.List;
@@ -24,5 +25,8 @@ public interface DiscordService {
 	Message<String> upload(String fileName, DataUrl dataUrl);
 
 	Message<String> sendImageMessage(String content, String finalFileName);
+
+	Message<MessagesResultVO> sendTextMessage(String cozeBotId, String channelId, String prompt, String nonce);
+
 
 }

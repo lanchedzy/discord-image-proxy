@@ -29,6 +29,11 @@ public abstract class MessageHandler {
 		return message.hasKey("nonce") ? message.getString("nonce") : "";
 	}
 
+	protected String getMessageReferenceId(DataObject message) {
+		DataObject messageReference = message.optObject("message_reference").orElse(DataObject.empty());
+		return messageReference.getString("message_id", "");
+	}
+
 	protected void findAndFinishImageTask(TaskCondition condition, String finalPrompt, DataObject message) {
 		String imageUrl = getImageUrl(message);
 		String messageHash = this.discordHelper.getMessageHash(imageUrl);
@@ -61,12 +66,24 @@ public abstract class MessageHandler {
 		DataArray attachments = message.optArray("attachments").orElse(DataArray.empty());
 		return !attachments.isEmpty();
 	}
+	protected boolean hasCozeImage(DataObject message) {
+		DataArray attachments = message.optArray("embeds").orElse(DataArray.empty());
+		return !attachments.isEmpty();
+	}
 
 	protected String getImageUrl(DataObject message) {
 		DataArray attachments = message.getArray("attachments");
 		if (!attachments.isEmpty()) {
 			String imageUrl = attachments.getObject(0).getString("url");
 			return replaceCdnUrl(imageUrl);
+		}
+		return null;
+	}
+
+	protected String getEmbedsImageUrl(DataObject message) {
+		DataArray attachments = message.getArray("embeds");
+		if (!attachments.isEmpty()) {
+			return attachments.getObject(0).getObject("image").getString("url");
 		}
 		return null;
 	}

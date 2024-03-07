@@ -1,12 +1,14 @@
 package com.github.novicezk.midjourney.service;
 
+import cn.hutool.core.thread.ThreadUtil;
 import com.github.novicezk.midjourney.Constants;
 import com.github.novicezk.midjourney.ReturnCode;
+import com.github.novicezk.midjourney.domain.CozeBotConfig;
 import com.github.novicezk.midjourney.enums.BlendDimensions;
+import com.github.novicezk.midjourney.enums.TaskStatus;
 import com.github.novicezk.midjourney.loadbalancer.DiscordInstance;
 import com.github.novicezk.midjourney.loadbalancer.DiscordLoadBalancer;
-import com.github.novicezk.midjourney.result.Message;
-import com.github.novicezk.midjourney.result.SubmitResultVO;
+import com.github.novicezk.midjourney.result.*;
 import com.github.novicezk.midjourney.support.Task;
 import com.github.novicezk.midjourney.util.MimeTypeUtils;
 import eu.maxschuster.dataurl.DataUrl;
@@ -16,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
@@ -123,6 +126,59 @@ public class TaskServiceImpl implements TaskService {
 			}
 			return discordInstance.blend(finalFileNames, dimensions, task.getPropertyGeneric(Constants.TASK_PROPERTY_NONCE));
 		});
+	}
+
+	@Override
+	public SubmitResultVO chatCompletions(Task task, List<DataUrl> dataUrls) {
+		return null;
+	}
+
+	@Override
+	public ImageGenerationsResultVO imageGenerations(Task task, List<DataUrl> dataUrls) {
+		DiscordInstance instance = this.discordLoadBalancer.chooseInstance();
+		if (instance == null) {
+			return ImageGenerationsResultVO.fail("无可用的账号实例", ReturnCode.NOT_FOUND + "");
+		}
+		CozeBotConfig cozeBot = this.discordLoadBalancer.chooseCozeBot(instance);
+		if (cozeBot == null) {
+			return ImageGenerationsResultVO.fail("无可用的CozeBot", ReturnCode.NOT_FOUND + "");
+		}
+		task.setProperty(Constants.TASK_PROPERTY_DISCORD_INSTANCE_ID, instance.getInstanceId());
+		// 发送消息
+		task.start();
+		Message<MessagesResultVO> message = instance.sendTextMessage(cozeBot.getBotId(), cozeBot.getChannelId(), task.getPrompt(), task.getPropertyGeneric(Constants.TASK_PROPERTY_NONCE));
+		if (message.getCode() != ReturnCode.SUCCESS) {
+			return ImageGenerationsResultVO.fail(message.getDescription(), message.getCode() + "");
+		}
+		log.info("prompt:{}, start for messageId:{}", task.getPrompt(), message.getResult().getId());
+		task.setStatus(TaskStatus.IN_PROGRESS);
+		task.setSubmitTime(System.currentTimeMillis());
+		instance.putTask(message.getResult().getId(), task);
+		while (true) {
+			ThreadUtil.sleep(50);
+			task = instance.getTaskByMessageId(message.getResult().getId());
+			if (task.getStatus() == TaskStatus.FAILURE) {
+				return ImageGenerationsResultVO.fail(task.getFailReason(), ReturnCode.NOT_FOUND + "");
+			}
+			switch (task.getStatus()) {
+				case FAILURE:
+					return ImageGenerationsResultVO.fail(task.getFailReason(), ReturnCode.NOT_FOUND + "");
+				case SUCCESS:
+					ImageGenerationsResultVO resultVO = new ImageGenerationsResultVO();
+					resultVO.setCreated(task.getFinishTime());
+					resultVO.setDailyLimit(false);
+					List<ImageItemDTO> imageItemDTOS = new ArrayList<>();
+					imageItemDTOS.add(new ImageItemDTO(task.getImageUrl()));
+					resultVO.setData(imageItemDTOS);
+					return resultVO;
+				default:
+					if (System.currentTimeMillis() - task.getSubmitTime() > 60000) {
+						task.fail("请求超时");
+						return ImageGenerationsResultVO.fail("请求超时", ReturnCode.TIME_OUT + "");
+					}
+
+            }
+		}
 	}
 
 }

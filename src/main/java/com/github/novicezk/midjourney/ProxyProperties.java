@@ -1,5 +1,6 @@
 package com.github.novicezk.midjourney;
 
+import com.github.novicezk.midjourney.domain.CozeBotConfig;
 import com.github.novicezk.midjourney.enums.TranslateWay;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -61,6 +62,10 @@ public class ProxyProperties {
 	 * 通知回调线程池大小.
 	 */
 	private int notifyPoolSize = 10;
+	/**
+	 * coze 作图的前缀：防止无法理解用户信息
+	 */
+	private String imagePromptPrefix;
 
 	@Data
 	public static class DiscordAccountConfig {
@@ -96,6 +101,11 @@ public class ProxyProperties {
 		 * 任务超时时间(分钟).
 		 */
 		private int timeoutMinutes = 5;
+		/**
+		 * coze机器人配置.
+		 */
+		private List<CozeBotConfig> cozes = new ArrayList<>();
+
 	}
 
 	@Data

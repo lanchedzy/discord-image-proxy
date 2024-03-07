@@ -30,4 +30,10 @@ public interface DiscordInstance extends DiscordService {
 
 	SubmitResultVO submitTask(Task task, Callable<Message<Void>> discordSubmit);
 
+	Task putTask(String messageId, Task task);
+
+	Task getTaskByMessageId(String messageId);
+
+	void deleteTask(String messageId);
+
 }

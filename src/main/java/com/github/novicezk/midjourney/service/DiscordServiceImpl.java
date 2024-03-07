@@ -6,6 +6,7 @@ import com.github.novicezk.midjourney.ReturnCode;
 import com.github.novicezk.midjourney.domain.DiscordAccount;
 import com.github.novicezk.midjourney.enums.BlendDimensions;
 import com.github.novicezk.midjourney.result.Message;
+import com.github.novicezk.midjourney.result.MessagesResultVO;
 import com.github.novicezk.midjourney.support.DiscordHelper;
 import com.github.novicezk.midjourney.support.SpringContextHolder;
 import eu.maxschuster.dataurl.DataUrl;
@@ -36,6 +37,8 @@ public class DiscordServiceImpl implements DiscordService {
 	private final String discordAttachmentUrl;
 	private final String discordMessageUrl;
 
+	private final String discordChannelMessageUrl;
+
 	public DiscordServiceImpl(DiscordAccount account, RestTemplate restTemplate, Map<String, String> paramsMap) {
 		this.account = account;
 		this.restTemplate = restTemplate;
@@ -45,6 +48,7 @@ public class DiscordServiceImpl implements DiscordService {
 		this.discordInteractionUrl = discordServer + "/api/v9/interactions";
 		this.discordAttachmentUrl = discordServer + "/api/v9/channels/" + account.getChannelId() + "/attachments";
 		this.discordMessageUrl = discordServer + "/api/v9/channels/" + account.getChannelId() + "/messages";
+		this.discordChannelMessageUrl = discordServer + "/api/v9/channels/%s/messages";
 	}
 
 	@Override
@@ -171,6 +175,29 @@ public class DiscordServiceImpl implements DiscordService {
 			return Message.success(attachments.getJSONObject(0).optString("url"));
 		}
 		return Message.failure("发送图片消息到discord失败: 图片不存在");
+	}
+
+	@Override
+	public Message<MessagesResultVO> sendTextMessage(String cozeBotId, String channelId, String prompt, String nonce) {
+		// 随机取账号中一个人回复
+//		this.account.getChannelId()
+		String paramsStr = this.paramsMap.get("bot-messages")
+				.replace("$content", prompt)
+				.replace("coze-bot-id",  cozeBotId)
+				.replace("$nonce", nonce);
+		ResponseEntity<String> responseEntity = postJson(this.discordChannelMessageUrl.formatted(channelId), paramsStr);
+		if (responseEntity.getStatusCode() != HttpStatus.OK) {
+			log.error("发送文本消息失败, status: {}, msg: {}", responseEntity.getStatusCodeValue(), responseEntity.getBody());
+			return Message.of(ReturnCode.VALIDATION_ERROR, "发送文本消息失败");
+		}
+		JSONObject result = new JSONObject(responseEntity.getBody());
+
+		MessagesResultVO resultVO = new MessagesResultVO();
+		resultVO.setId(result.optString("id"));
+		resultVO.setChannelId(result.optString("channel_id"));
+		resultVO.setContent(result.optString("content"));
+		resultVO.setNonce(result.optString("nonce"));
+		return Message.success(resultVO);
 	}
 
 	private void putFile(String uploadUrl, DataUrl dataUrl) {

@@ -3,12 +3,14 @@ package com.github.novicezk.midjourney.wss.user;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.thread.ThreadUtil;
+import com.github.novicezk.midjourney.domain.CozeBotConfig;
 import com.github.novicezk.midjourney.domain.DiscordAccount;
 import com.github.novicezk.midjourney.enums.MessageType;
 import com.github.novicezk.midjourney.wss.handle.MessageHandler;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.utils.data.DataObject;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -27,6 +29,8 @@ public class UserMessageListener {
 			return;
 		}
 		DataObject data = raw.getObject("d");
+
+		log.info("receive binary message, type:{}, raw:{}", messageType, raw);
 		if (ignoreAndLogMessage(data, messageType)) {
 			return;
 		}
@@ -38,7 +42,8 @@ public class UserMessageListener {
 
 	private boolean ignoreAndLogMessage(DataObject data, MessageType messageType) {
 		String channelId = data.getString("channel_id");
-		if (!CharSequenceUtil.equals(channelId, this.account.getChannelId())) {
+		if (!CharSequenceUtil.equals(channelId, this.account.getChannelId()) && this.account.getCozes().stream().noneMatch(x -> CharSequenceUtil.equals(channelId, x.getChannelId()))) {
+			log.warn("ignore message from channel: {}", channelId);
 			return true;
 		}
 		String authorName = data.optObject("author").map(a -> a.getString("username")).orElse("System");

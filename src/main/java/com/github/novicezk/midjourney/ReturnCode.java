@@ -37,6 +37,10 @@ public final class ReturnCode {
 	 * prompt包含敏感词.
 	 */
 	public static final int BANNED_PROMPT = 24;
+	/**
+	 * 请求超时
+	 */
+	public static final int TIME_OUT = 25;
 
 
 }

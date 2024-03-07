@@ -7,6 +7,8 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.util.List;
+
 @Data
 @EqualsAndHashCode(callSuper = true)
 @ApiModel("Discord账号")
@@ -30,6 +32,9 @@ public class DiscordAccount extends DomainObject {
 	private int queueSize = 10;
 	@ApiModelProperty("任务超时时间(分钟)")
 	private int timeoutMinutes = 5;
+
+	@ApiModelProperty("coze机器人信息")
+	private List<CozeBotConfig> cozes;
 
 	@JsonIgnore
 	public String getDisplay() {

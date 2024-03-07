@@ -2,6 +2,8 @@ package com.github.novicezk.midjourney.loadbalancer;
 
 
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.RandomUtil;
+import com.github.novicezk.midjourney.domain.CozeBotConfig;
 import com.github.novicezk.midjourney.loadbalancer.rule.IRule;
 import com.github.novicezk.midjourney.support.Task;
 import com.github.novicezk.midjourney.support.TaskCondition;
@@ -35,6 +37,10 @@ public class DiscordLoadBalancer {
 		return this.rule.choose(getAliveInstances());
 	}
 
+	public CozeBotConfig chooseCozeBot(DiscordInstance instance) {
+		return RandomUtil.randomEle(instance.account().getCozes());
+	}
+
 	public DiscordInstance getDiscordInstance(String instanceId) {
 		if (CharSequenceUtil.isBlank(instanceId)) {
 			return null;
@@ -61,6 +67,16 @@ public class DiscordLoadBalancer {
 			Optional<Task> optional = instance.getRunningTasks().stream().filter(t -> id.equals(t.getId())).findFirst();
 			if (optional.isPresent()) {
 				return optional.get();
+			}
+		}
+		return null;
+	}
+
+	public Task getMappingTask(String messageId) {
+		for (DiscordInstance instance : getAliveInstances()) {
+			Task task = instance.getTaskByMessageId(messageId);
+			if (task != null) {
+				return task;
 			}
 		}
 		return null;

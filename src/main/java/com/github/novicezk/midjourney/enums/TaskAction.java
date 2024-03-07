@@ -25,6 +25,14 @@ public enum TaskAction {
 	/**
 	 * 多图混合.
 	 */
-	BLEND
+	BLEND,
+	/**
+	 * 图片生成
+	 */
+	IMAGE_GENERATIONS,
+	/**
+	 * 对话完成
+	 */
+	CHAT_COMPLETIONS,
 
 }

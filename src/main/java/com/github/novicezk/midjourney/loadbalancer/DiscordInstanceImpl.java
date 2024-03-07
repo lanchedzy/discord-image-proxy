@@ -7,6 +7,7 @@ import com.github.novicezk.midjourney.domain.DiscordAccount;
 import com.github.novicezk.midjourney.enums.BlendDimensions;
 import com.github.novicezk.midjourney.enums.TaskStatus;
 import com.github.novicezk.midjourney.result.Message;
+import com.github.novicezk.midjourney.result.MessagesResultVO;
 import com.github.novicezk.midjourney.result.SubmitResultVO;
 import com.github.novicezk.midjourney.service.DiscordService;
 import com.github.novicezk.midjourney.service.DiscordServiceImpl;
@@ -24,10 +25,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.Future;
-import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.*;
 
 @Slf4j
 public class DiscordInstanceImpl implements DiscordInstance {
@@ -40,6 +38,8 @@ public class DiscordInstanceImpl implements DiscordInstance {
 	private final ThreadPoolTaskExecutor taskExecutor;
 	private final List<Task> runningTasks;
 	private final Map<String, Future<?>> taskFutureMap = Collections.synchronizedMap(new HashMap<>());
+
+	private final Map<String, Task> taskMapping = new ConcurrentHashMap<>();
 
 	public DiscordInstanceImpl(DiscordAccount account, UserWebSocketStarter socketStarter, RestTemplate restTemplate,
 			TaskStoreService taskStoreService, NotifyService notifyService, Map<String, String> paramsMap) {
@@ -102,6 +102,8 @@ public class DiscordInstanceImpl implements DiscordInstance {
 		return this.taskFutureMap;
 	}
 
+
+
 	@Override
 	public synchronized SubmitResultVO submitTask(Task task, Callable<Message<Void>> discordSubmit) {
 		this.taskStoreService.save(task);
@@ -127,6 +129,21 @@ public class DiscordInstanceImpl implements DiscordInstance {
 					.setProperty("numberOfQueues", currentWaitNumbers)
 					.setProperty(Constants.TASK_PROPERTY_DISCORD_INSTANCE_ID, this.getInstanceId());
 		}
+	}
+
+	@Override
+	public Task putTask(String messageId, Task task) {
+		return this.taskMapping.put(messageId, task);
+	}
+
+	@Override
+	public Task getTaskByMessageId(String messageId) {
+		return this.taskMapping.get(messageId);
+	}
+
+	@Override
+	public void deleteTask(String messageId) {
+		this.taskMapping.remove(messageId);
 	}
 
 	private void executeTask(Task task, Callable<Message<Void>> discordSubmit) {
@@ -200,6 +217,11 @@ public class DiscordInstanceImpl implements DiscordInstance {
 	@Override
 	public Message<String> sendImageMessage(String content, String finalFileName) {
 		return this.service.sendImageMessage(content, finalFileName);
+	}
+
+	@Override
+	public Message<MessagesResultVO> sendTextMessage(String cozeBotId, String channelId, String prompt, String nonce) {
+		return this.service.sendTextMessage(cozeBotId, channelId, prompt, nonce);
 	}
 
 }

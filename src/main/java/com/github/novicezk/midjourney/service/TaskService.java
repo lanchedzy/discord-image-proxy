@@ -1,6 +1,8 @@
 package com.github.novicezk.midjourney.service;
 
 import com.github.novicezk.midjourney.enums.BlendDimensions;
+import com.github.novicezk.midjourney.result.BaseOpenAiResultVo;
+import com.github.novicezk.midjourney.result.ImageGenerationsResultVO;
 import com.github.novicezk.midjourney.result.SubmitResultVO;
 import com.github.novicezk.midjourney.support.Task;
 import eu.maxschuster.dataurl.DataUrl;
@@ -20,4 +22,8 @@ public interface TaskService {
 	SubmitResultVO submitDescribe(Task task, DataUrl dataUrl);
 
 	SubmitResultVO submitBlend(Task task, List<DataUrl> dataUrls, BlendDimensions dimensions);
+
+	SubmitResultVO chatCompletions(Task task, List<DataUrl> dataUrls);
+
+	BaseOpenAiResultVo imageGenerations(Task task, List<DataUrl> dataUrls);
 }
