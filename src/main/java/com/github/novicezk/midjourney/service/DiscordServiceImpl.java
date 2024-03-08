@@ -182,10 +182,11 @@ public class DiscordServiceImpl implements DiscordService {
 		// 随机取账号中一个人回复
 //		this.account.getChannelId()
 		String paramsStr = this.paramsMap.get("bot-messages")
-				.replace("$content", prompt)
-				.replace("coze-bot-id",  cozeBotId)
 				.replace("$nonce", nonce);
-		ResponseEntity<String> responseEntity = postJson(this.discordChannelMessageUrl.formatted(channelId), paramsStr);
+		JSONObject params = new JSONObject(paramsStr);
+		params.put("content", params.getString("content").replace("$coze-bot-id", cozeBotId).replace("$content", prompt));
+//		.replace("$content", prompt)
+		ResponseEntity<String> responseEntity = postJson(this.discordChannelMessageUrl.formatted(channelId), params.toString());
 		if (responseEntity.getStatusCode() != HttpStatus.OK) {
 			log.error("发送文本消息失败, status: {}, msg: {}", responseEntity.getStatusCodeValue(), responseEntity.getBody());
 			return Message.of(ReturnCode.VALIDATION_ERROR, "发送文本消息失败");

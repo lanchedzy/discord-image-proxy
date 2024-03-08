@@ -1,6 +1,6 @@
 {
   "mobile_network_type": "unknown",
-  "content": "<@coze-bot-id> $content",
+  "content": "<@$coze-bot-id> $content",
   "nonce": "$nonce",
   "tts": false,
   "flags": 0
