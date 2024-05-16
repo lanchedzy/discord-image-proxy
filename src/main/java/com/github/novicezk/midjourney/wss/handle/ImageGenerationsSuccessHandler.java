@@ -5,6 +5,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import com.github.novicezk.midjourney.Constants;
 import com.github.novicezk.midjourney.enums.MessageType;
 import com.github.novicezk.midjourney.enums.TaskAction;
+import com.github.novicezk.midjourney.loadbalancer.DiscordInstance;
 import com.github.novicezk.midjourney.support.Task;
 import com.github.novicezk.midjourney.support.TaskCondition;
 import com.github.novicezk.midjourney.util.ContentParseData;
@@ -25,18 +26,17 @@ public class ImageGenerationsSuccessHandler extends MessageHandler {
 	private static final String CONTENT_REGEX = "\\*\\*(.*?)\\*\\* - <@\\d+> \\((.*?)\\)";
 
 	@Override
-	public void handle(MessageType messageType, DataObject message) {
-		String messageId = getMessageReferenceId(message);
+	public void handle(DiscordInstance instance, MessageType messageType, DataObject message) {
+		String messageId = getReferenceMessageId(message);
 		if (CharSequenceUtil.isEmpty(messageId)) {
 			return;
 		}
 		if (MessageType.CREATE.equals(messageType) && hasCozeImage(message)) {
-			Task task = this.discordLoadBalancer.getMappingTask(messageId);
+			Task task = instance.getTaskByMessageId(messageId);
 			String imageUrl = getEmbedsImageUrl(message);
 			task.setImageUrl(imageUrl);
 			finishTask(task, message);
 			log.info("messageId:{}, 任务完成: {}", messageId, task);
 		}
 	}
-
 }

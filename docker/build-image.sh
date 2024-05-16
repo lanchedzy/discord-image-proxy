@@ -26,9 +26,9 @@ cp ${JAR_FILE_NAME} ./app.jar
 
 java -Djarmode=layertools -jar app.jar extract
 
-docker build . -t midjourney-proxy:${VERSION}
+docker build . -t lmz/discord-image-proxy:${VERSION}
 
 rm -rf application dependencies snapshot-dependencies spring-boot-loader app.jar
 
-docker tag midjourney-proxy:${VERSION} novicezk/midjourney-proxy-${ARCH}:${VERSION}
-docker push novicezk/midjourney-proxy-${ARCH}:${VERSION}
+docker tag discord-image-proxy:${VERSION} lmz/discord-image-proxy-${ARCH}:${VERSION}
+docker push lmz/discord-image-proxy-${ARCH}:${VERSION}

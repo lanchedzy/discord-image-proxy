@@ -3,8 +3,6 @@ package com.github.novicezk.midjourney.wss.user;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.thread.ThreadUtil;
-import com.github.novicezk.midjourney.domain.CozeBotConfig;
-import com.github.novicezk.midjourney.domain.DiscordAccount;
 import com.github.novicezk.midjourney.Constants;
 import com.github.novicezk.midjourney.enums.MessageType;
 import com.github.novicezk.midjourney.loadbalancer.DiscordInstance;
@@ -12,7 +10,6 @@ import com.github.novicezk.midjourney.wss.handle.MessageHandler;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.utils.data.DataObject;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -50,7 +47,6 @@ public class UserMessageListener {
 
 	private boolean ignoreAndLogMessage(DataObject data, MessageType messageType) {
 		String channelId = data.getString("channel_id");
-		if (!CharSequenceUtil.equals(channelId, this.instance.account().getChannelId())) {
 		if (!CharSequenceUtil.equals(channelId, this.instance.account().getChannelId()) && this.instance.account().getCozes().stream().noneMatch(x -> CharSequenceUtil.equals(channelId, x.getChannelId()))) {
 			log.warn("ignore message from channel: {}", channelId);
 			return true;
