@@ -58,42 +58,36 @@ public class DiscordLoadBalancer {
 		return taskIds;
 	}
 
-	public Stream<Task> findRunningTask(TaskCondition condition) {
-		return getAliveInstances().stream().flatMap(instance -> instance.getRunningTasks().stream().filter(condition));
+	public List<Task> getQueueTasks() {
+		List<Task> tasks = new ArrayList<>();
+		for (DiscordInstance instance : getAliveInstances()) {
+			tasks.addAll(instance.getQueueTasks());
+		}
+		return tasks;
 	}
 
-	public Task getRunningTask(String id) {
-		for (DiscordInstance instance : getAliveInstances()) {
-			Optional<Task> optional = instance.getRunningTasks().stream().filter(t -> id.equals(t.getId())).findFirst();
-			if (optional.isPresent()) {
-				return optional.get();
-			}
-		}
-		return null;
-	}
+    public Task getMappingTask(String messageId) {
+        for (DiscordInstance instance : getAliveInstances()) {
+            Task task = instance.getTaskByMessageId(messageId);
+            if (task != null) {
+                return task;
+            }
+        }
+        return null;
+    }
 
-	public Task getMappingTask(String messageId) {
-		for (DiscordInstance instance : getAliveInstances()) {
-			Task task = instance.getTaskByMessageId(messageId);
-			if (task != null) {
-				return task;
-			}
-		}
-		return null;
-	}
-
-	public Task getRunningTaskByNonce(String nonce) {
-		if (CharSequenceUtil.isBlank(nonce)) {
-			return null;
-		}
-		TaskCondition condition = new TaskCondition().setNonce(nonce);
-		for (DiscordInstance instance : getAliveInstances()) {
-			Optional<Task> optional = instance.getRunningTasks().stream().filter(condition).findFirst();
-			if (optional.isPresent()) {
-				return optional.get();
-			}
-		}
-		return null;
-	}
+    public Task getRunningTaskByNonce(String nonce) {
+        if (CharSequenceUtil.isBlank(nonce)) {
+            return null;
+        }
+        TaskCondition condition = new TaskCondition().setNonce(nonce);
+        for (DiscordInstance instance : getAliveInstances()) {
+            Optional<Task> optional = instance.getRunningTasks().stream().filter(condition).findFirst();
+            if (optional.isPresent()) {
+                return optional.get();
+            }
+        }
+        return null;
+    }
 
 }
